@@ -23,6 +23,8 @@ parser.add_argument("--demos-origin", default=None,
                     help="origin of the demonstrations: human | agent (REQUIRED or --model or --demos REQUIRED)")
 parser.add_argument("--seed", type=int, default=None,
                     help="random seed (default: 0 if model agent, 1 if demo agent)")
+parser.add_argument("--shift", type=int, default=0,
+                    help="number of times the environment is reset at the beginning (default: 0)")
 parser.add_argument("--argmax", action="store_true", default=False,
                     help="action with highest probability is selected for model agent")
 parser.add_argument("--pause", type=float, default=0.1,
@@ -41,7 +43,7 @@ action_map = {
     "SPACE": "toggle"
 }
 
-assert args.model is not None or args.demos is not None, "--model or --demos must be specified."
+assert args.model is not None or args.demos_origin is not None, "--model or --demos-origin must be specified."
 if args.seed is None:
     args.seed = 0 if args.model is not None else 1
 
@@ -53,6 +55,8 @@ utils.seed(args.seed)
 
 env = gym.make(args.env)
 env.seed(args.seed)
+for _ in range(args.shift):
+    env.reset()
 
 global obs
 obs = env.reset()
@@ -89,7 +93,6 @@ def keyDownCb(keyName):
         print("Mission: {}".format(obs["mission"]))
 
 step = 0
-episode_num = 0
 while True:
     time.sleep(args.pause)
     renderer = env.render("human")
@@ -108,8 +111,6 @@ while True:
             print("step: {}, mission: {}".format(step, obs['mission']))
         if done:
             print("Reward:", reward)
-            episode_num += 1
-            env.seed(args.seed + episode_num)
             obs = env.reset()
             agent.on_reset()
             step = 0
