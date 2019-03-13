@@ -90,7 +90,7 @@ class PPOAlgo(BaseAlgo):
                     # Compute loss
                     if i % int(comm_freq) == 0:
                         talk = True
-                    model_results, _ = self.acmodel(sb.full_obs, sb.obs,  memory * sb.mask)
+                    model_results, _ = self.acmodel(sb.full_obs, sb.obs,  memory * sb.mask, talk)
 
                     dist = model_results['dist']
                     value = model_results['value']
@@ -105,7 +105,7 @@ class PPOAlgo(BaseAlgo):
 
                     if self.class_weights:
                         surr_loss = -torch.min(surr1, surr2)
-                        actions = sb.action.numpy()
+                        actions = sb.action.cpu().numpy()
                         missing = sorted(set(np.arange(np.max(actions))) - set(actions))
                         class_weights = compute_class_weight(class_weight='balanced',
                                                              classes=np.unique(actions),

@@ -118,7 +118,6 @@ if torch.cuda.is_available():
 
 # Define actor-critic algo
 
-
 reshape_reward = lambda _0, _1, reward, _2: args.reward_scale * reward
 if args.algo == "ppo":
     algo = babyai.rl.PPOAlgo(envs, acmodel, args.frames_per_proc, args.discount, args.lr, args.beta1, args.beta2,
