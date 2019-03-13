@@ -37,8 +37,8 @@ class Student(ACModel):
             raise ValueError("Student observation type must be either vision or blind")
 
         full_embedding = torch.cat((embedding, message_embedding), dim=1)
-        # policy_input = self.dropout(full_embedding)
-        policy_input = full_embedding
+        policy_input = self.dropout(full_embedding)
+        # policy_input = full_embedding
         x = self.actor(policy_input)
         dist = Categorical(logits=F.log_softmax(x, dim=1))
 

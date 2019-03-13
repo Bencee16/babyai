@@ -196,7 +196,7 @@ test_env_name = args.env
 while status['num_frames'] < args.frames:
     # Update parameters
     update_start_time = time.time()
-    logs = algo.update_parameters(args.teacher_obs, args.comm_freq)
+    logs, comms = algo.update_parameters(args.teacher_obs, args.comm_freq)
     update_end_time = time.time()
 
     status['num_frames'] += logs["num_frames"]
@@ -204,6 +204,10 @@ while status['num_frames'] < args.frames:
     status['i'] += 1
 
     # Print logs
+    if status['i'] % args.vocabsave_interval == 0 and args.vocabsave_interval != 0:
+        if not os.path.exists('communication/'+args.model):
+            os.makedirs('communication/'+args.model)
+        torch.save(comms, './communication/'+args.model+'/'+str(status['i'])+'.pt')
 
     if status['i'] % args.log_interval == 0:
         total_ellapsed_time = int(time.time() - total_start_time)

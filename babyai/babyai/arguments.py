@@ -31,6 +31,8 @@ class ArgumentParser(argparse.ArgumentParser):
                           help="if True, use class-weighs to penalize frequent classes in behavior")
 
         # Training arguments
+        self.add_argument("--vocabsave-interval", type=int, default=0,
+                          help="number of updates between saving communication details, (default: 0 = no saving)")
         self.add_argument("--log-interval", type=int, default=10,
                             help="number of updates between two logs (default: 10)")
         self.add_argument("--save-interval", type=int, default=100,

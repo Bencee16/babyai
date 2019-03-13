@@ -49,6 +49,7 @@ class PPOAlgo(BaseAlgo):
         being the added information. They are either (n_procs * n_frames_per_proc) 1D tensors or
         (n_procs * n_frames_per_proc) x k 2D tensors where k is the number of classes for multiclass classification
         '''
+        comms = []
 
         for _ in range(self.epochs):
             # Initialize log values
@@ -90,7 +91,11 @@ class PPOAlgo(BaseAlgo):
                     # Compute loss
                     if i % int(comm_freq) == 0:
                         talk = True
-                    model_results, _ = self.acmodel(sb.full_obs, sb.obs,  memory * sb.mask, talk)
+                    else:
+                        talk = False
+                    model_results, comm = self.acmodel(sb.full_obs, sb.obs,  memory * sb.mask, talk)
+                    comms.append(comm)
+
 
                     dist = model_results['dist']
                     value = model_results['value']
@@ -114,6 +119,8 @@ class PPOAlgo(BaseAlgo):
                         for m in missing:
                             class_weights = np.insert(class_weights, m, 0)
                         weights = torch.tensor(class_weights[actions]).float()
+                        if torch.cuda.is_available():
+                            weights.cuda()
                         policy_loss = (surr_loss * weights).mean()
                     else:
                         policy_loss = -torch.min(surr1, surr2).mean()
@@ -132,7 +139,6 @@ class PPOAlgo(BaseAlgo):
                     batch_policy_loss += policy_loss.item()
                     batch_value_loss += value_loss.item()
                     batch_loss += loss
-
                     # Update memories for next epoch
 
                     if i < self.recurrence - 1:
@@ -172,7 +178,9 @@ class PPOAlgo(BaseAlgo):
         logs["grad_norm"] = numpy.mean(log_grad_norms)
         logs["loss"] = numpy.mean(log_losses)
 
-        return logs
+        comms = torch.stack(comms)
+
+        return logs, comms
 
     def _get_batches_starting_indexes(self):
         """Gives, for each batch, the indexes of the observations given to
