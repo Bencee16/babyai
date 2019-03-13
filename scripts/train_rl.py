@@ -82,6 +82,14 @@ else:
     obss_preprocessor = utils.ObssPreprocessor(args.model, envs[0].observation_space, args.pretrained_model)
 
 # Define actor-critic model
+preprocess_obss_student = utils.ObssPreprocessor(args.model, "egocentric", args.pretrained_model)
+preprocess_obss_teacher = utils.ObssPreprocessor(args.model, args.teacher_obs, args.pretrained_model, envs[0].room_size)
+
+
+#TODO: here comes the pooling part
+
+
+#Define actor-critic model
 acmodel = utils.load_model(args.model, raise_not_found=False)
 if acmodel is None:
     if args.pretrained_model:
