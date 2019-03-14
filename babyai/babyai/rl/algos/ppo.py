@@ -50,6 +50,7 @@ class PPOAlgo(BaseAlgo):
         (n_procs * n_frames_per_proc) x k 2D tensors where k is the number of classes for multiclass classification
         '''
         comms = []
+        actions = []
 
         for _ in range(self.epochs):
             # Initialize log values
@@ -88,6 +89,7 @@ class PPOAlgo(BaseAlgo):
                     # Create a sub-batch of experience
                     sb = exps[inds + i]
 
+                    actions.append(sb.action)
                     # Compute loss
                     if i % int(comm_freq) == 0:
                         talk = True
@@ -120,7 +122,7 @@ class PPOAlgo(BaseAlgo):
                             class_weights = np.insert(class_weights, m, 0)
                         weights = torch.tensor(class_weights[actions]).float()
                         if torch.cuda.is_available():
-                            weights.cuda()
+                            weights = weights.cuda()
                         policy_loss = (surr_loss * weights).mean()
                     else:
                         policy_loss = -torch.min(surr1, surr2).mean()
@@ -179,8 +181,9 @@ class PPOAlgo(BaseAlgo):
         logs["loss"] = numpy.mean(log_losses)
 
         comms = torch.stack(comms)
+        actions = torch.stack(actions)
 
-        return logs, comms
+        return logs, comms, actions
 
     def _get_batches_starting_indexes(self):
         """Gives, for each batch, the indexes of the observations given to

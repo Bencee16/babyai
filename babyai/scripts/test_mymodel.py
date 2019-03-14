@@ -102,9 +102,8 @@ if acmodel is None:
                                 not args.no_instr, args.instr_arch, not args.no_mem, args.arch)
         student = Student(preprocess_obss_student.obs_space, args.student_obs_type,
                         envs[0].action_space,
-                        args.message_length,
-                        args.image_dim, args.memory_dim, args.instr_dim, args.message_dim,
-                        not args.no_instr, args.instr_arch, not args.no_mem, args.arch)
+                        args.message_length, args.image_dim, args.memory_dim, args.instr_dim, args.message_dim,
+                        args.dropout, not args.no_instr, args.instr_arch, not args.no_mem, args.arch)
         acmodel = JointModel(teacher, student)
 
 
@@ -196,19 +195,24 @@ test_env_name = args.env
 while status['num_frames'] < args.frames:
     # Update parameters
     update_start_time = time.time()
-    logs, comms = algo.update_parameters(args.teacher_obs, args.comm_freq)
+    logs, comms, actions = algo.update_parameters(args.teacher_obs, args.comm_freq)
     update_end_time = time.time()
 
     status['num_frames'] += logs["num_frames"]
     status['num_episodes'] += logs['episodes_done']
     status['i'] += 1
 
-    # Print logs
-    if status['i'] % args.vocabsave_interval == 0 and args.vocabsave_interval != 0:
+    #Saving communication and actions
+    if args.stats_save_interval != 0 and status['i'] % args.stats_save_interval == 0:
         if not os.path.exists('communication/'+args.model):
             os.makedirs('communication/'+args.model)
         torch.save(comms, './communication/'+args.model+'/'+str(status['i'])+'.pt')
 
+        if not os.path.exists('action/'+args.model):
+            os.makedirs('action/'+args.model)
+        torch.save(actions, './action/'+args.model+'/'+str(status['i'])+'.pt')
+
+    # Print logs
     if status['i'] % args.log_interval == 0:
         total_ellapsed_time = int(time.time() - total_start_time)
         fps = logs["num_frames"] / (update_end_time - update_start_time)

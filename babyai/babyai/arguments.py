@@ -31,8 +31,8 @@ class ArgumentParser(argparse.ArgumentParser):
                           help="if True, use class-weighs to penalize frequent classes in behavior")
 
         # Training arguments
-        self.add_argument("--vocabsave-interval", type=int, default=0,
-                          help="number of updates between saving communication details, (default: 0 = no saving)")
+        self.add_argument("--stats-save-interval", type=int, default=0,
+                          help="number of updates between saving communication and action details, (default: 0 = no saving)")
         self.add_argument("--log-interval", type=int, default=10,
                             help="number of updates between two logs (default: 10)")
         self.add_argument("--save-interval", type=int, default=100,
@@ -63,6 +63,8 @@ class ArgumentParser(argparse.ArgumentParser):
                             help="entropy term coefficient (default: 0.01)")
 
         # Model parameters
+        self.add_argument("--dropout", type=float, default=0,
+                          help="dropout rate before policy (default: 0 =no dropout)")
         self.add_argument("--image-dim", type=int, default=128,
                             help="dimensionality of the image embedding")
         self.add_argument("--memory-dim", type=int, default=128,
