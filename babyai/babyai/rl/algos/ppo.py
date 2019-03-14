@@ -50,7 +50,7 @@ class PPOAlgo(BaseAlgo):
         (n_procs * n_frames_per_proc) x k 2D tensors where k is the number of classes for multiclass classification
         '''
         comms = []
-        actions = []
+        acts = []
 
         for _ in range(self.epochs):
             # Initialize log values
@@ -89,7 +89,7 @@ class PPOAlgo(BaseAlgo):
                     # Create a sub-batch of experience
                     sb = exps[inds + i]
 
-                    actions.append(sb.action)
+                    acts.append(sb.action)
                     # Compute loss
                     if i % int(comm_freq) == 0:
                         talk = True
@@ -181,9 +181,9 @@ class PPOAlgo(BaseAlgo):
         logs["loss"] = numpy.mean(log_losses)
 
         comms = torch.stack(comms)
-        actions = torch.stack(actions)
+        acts = torch.stack(acts)
 
-        return logs, comms, actions
+        return logs, comms, acts
 
     def _get_batches_starting_indexes(self):
         """Gives, for each batch, the indexes of the observations given to

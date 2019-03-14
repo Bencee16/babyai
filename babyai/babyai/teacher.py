@@ -4,7 +4,6 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-
 class GumbelSoftmax(nn.Module):
     def __init__(self, dim):
         super().__init__()

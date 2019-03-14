@@ -62,19 +62,22 @@ for i in range(args.procs):
     full_obss.append(full_obs)
 
 # Define model name
-suffix = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
+prefix = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
 # instr = args.instr_arch if args.instr_arch else "noinstr"
 # mem = "mem" if not args.no_mem else "nomem"
 model_name_parts = {
+    'prefix': prefix,
     'env': args.env,
     'comm_freq': args.comm_freq,
     'message_length': args.message_length,
     'vocab_size': args.vocab_size,
     'teacher_obs': args.teacher_obs,
     'student_obs_type': args.student_obs_type,
-    'suffix': suffix}
+    'dropout_rate': args.dropout,
+    'class_weights': args.class_weights
+    }
 
-default_model_name = "{env}_{comm_freq}_{message_length}_{vocab_size}_{teacher_obs}_{student_obs_type}_{suffix}".format(**model_name_parts)
+default_model_name = "{prefix}_{env}_{comm_freq}_{message_length}_{vocab_size}_{teacher_obs}_{student_obs_type}_{dropout_rate}_{class_weights}".format(**model_name_parts)
 if args.pretrained_model:
     default_model_name = args.pretrained_model + '_pretrained_' + default_model_name
 args.model = args.model.format(**model_name_parts) if args.model else default_model_name
