@@ -40,11 +40,18 @@ class Teacher (ACModel):
     def forward(self, obs, memory, instr_embedding=None):
         embedding, memory, extra_predictions = self._get_embed(obs, memory, instr_embedding)
 
+        lstm_input = embedding.unsqueeze(0)
+        for i in range(self.message_length):
+            if i==0:
+                out, (hidden, cell) = self.comm_lstm(lstm_input)
+                lstm_out = out
+            else:
+                out, (hidden, cell) = self.comm_lstm(lstm_input, (hidden, cell))
+                lstm_out = torch.cat((lstm_out, out), dim=0)
+            lstm_input = out.detach()
 
-        lstm_input = torch.transpose(embedding.unsqueeze(2).repeat(1, 1, self.message_length), 1, 2)
-        lstm_out, _ = self.comm_lstm(lstm_input)
 
-        out = self.hidden2word(lstm_out)
+        out = self.hidden2word(lstm_out.transpose(0,1))
         word_probs = self.gumbel_softmax(out)
 
         return word_probs
