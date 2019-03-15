@@ -113,7 +113,7 @@ class PPOAlgo(BaseAlgo):
                     if self.class_weights:
                         surr_loss = -torch.min(surr1, surr2)
                         actions = sb.action.cpu().numpy()
-                        missing = sorted(set(np.arange(np.max(actions))) - set(actions))
+                        missing = sorted(set(np.arange(7)) - set(actions))
                         class_weights = compute_class_weight(class_weight='balanced',
                                                              classes=np.unique(actions),
                                                              y=actions)
