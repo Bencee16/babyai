@@ -81,8 +81,8 @@ class ArgumentParser(argparse.ArgumentParser):
                             help="don't use memory in the model")
         self.add_argument("--arch", default='expert_filmcnn',
                             help="image embedding architecture")
-        self.add_argument("--teacher-obs", default="full",
-                          help="the information that the teacher has access to (default=full, choosable: egocentric)")
+        self.add_argument("--teacher-obs", default="egocentric",
+                          help="the information that the teacher has access to (default=egocentric, choosable: full)")
 
 
         #Communication parameters
