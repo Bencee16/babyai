@@ -2,7 +2,7 @@ from babyai.model import ACModel
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from torch.distributions.relaxed_categorical import RelaxedOneHotCategorical
 
 class GumbelSoftmax(nn.Module):
     def __init__(self, dim):
@@ -31,27 +31,71 @@ class Teacher (ACModel):
         self.actor = None
         self.critic = None
 
-        self.comm_lstm = nn.LSTM(self.image_dim, self.comm_lstm_hidden_size, batch_first=True)
+        # self.comm_lstm = nn.LSTM(self.image_dim, self.comm_lstm_hidden_size, batch_first=True)
         self.hidden2word = nn.Linear(self.comm_lstm_hidden_size, self.vocab_size)
-        self.gumbel_softmax = GumbelSoftmax(2)
+        # self.gumbel_softmax = GumbelSoftmax(2)
+        # self.softmax = nn.Softmax(dim=2)
+        self.lstm_cell = nn.LSTMCell(self.image_dim, self.comm_lstm_hidden_size)
+        self.embed_token = nn.Parameter(torch.empty((vocab_size, self.image_dim), dtype=torch.float32))
 
         self.use_memory = False
 
-    def forward(self, obs, memory, instr_embedding=None):
+    def forward(self, obs, memory, instr_embedding=None, tau=1.2):
+        # embedding, memory, extra_predictions = self._get_embed(obs, memory, instr_embedding)
+        #
+        # lstm_input = embedding.unsqueeze(0)
+        # for i in range(self.message_length):
+        #     if i==0:
+        #         out, (hidden, cell) = self.comm_lstm(lstm_input)
+        #         lstm_out = out
+        #     else:
+        #         out, (hidden, cell) = self.comm_lstm(lstm_input, (hidden, cell))
+        #         lstm_out = torch.cat((lstm_out, out), dim=0)
+        #     lstm_input = out.detach()
+        #
+        #
+        # out = self.hidden2word(lstm_out.transpose(0,1))
+
+
+
+
+
+        #Diana
         embedding, memory, extra_predictions = self._get_embed(obs, memory, instr_embedding)
 
-        lstm_input = embedding.unsqueeze(0)
+        message = []
         for i in range(self.message_length):
+
             if i==0:
-                out, (hidden, cell) = self.comm_lstm(lstm_input)
-                lstm_out = out
+                lstm_input = embedding
+                (h,c) = self.lstm_cell(lstm_input)
             else:
-                out, (hidden, cell) = self.comm_lstm(lstm_input, (hidden, cell))
-                lstm_out = torch.cat((lstm_out, out), dim=0)
-            lstm_input = out.detach()
+                lstm_input = torch.matmul(message[-1], self.embed_token)
+                (h,c) = self.lstm_cell(lstm_input, (h,c))
+            out = F.softmax(self.hidden2word(h), dim=1)
 
 
-        out = self.hidden2word(lstm_out.transpose(0,1))
-        word_probs = self.gumbel_softmax(out)
+            if self.training:
+                rohc = RelaxedOneHotCategorical(tau, out)
+                token = rohc.rsample()
 
-        return word_probs
+                # Straight-through part
+                token_hard = torch.zeros_like(token)
+                token_hard.scatter_(-1, torch.argmax(token, dim=-1, keepdim=True), 1.0)
+                token = (token_hard - token).detach() + token
+            else:
+                if self.greedy:
+                    _, token = torch.max(p, -1)
+                else:
+                    token = Categorical(p).sample()
+
+            message.append(token)
+
+
+        #Diana
+
+
+
+        # word_probs = self.gumbel_softmax(out)
+        # word_probs = self.softmax(out)
+        return torch.stack(message, dim=1)
