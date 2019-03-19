@@ -100,7 +100,7 @@ if acmodel is None:
         acmodel = utils.load_model(args.pretrained_model, raise_not_found=True)
     else:
         teacher = Teacher(preprocess_obss_teacher.obs_space, envs[0].action_space,
-                                args.message_length, args.comm_lstm_hidden_size,
+                                args.message_length,
                                 args.image_dim, args.memory_dim, args.instr_dim, args.vocab_size,
                                 not args.no_instr, args.instr_arch, not args.no_mem, args.arch)
         student = Student(preprocess_obss_student.obs_space, args.student_obs_type,

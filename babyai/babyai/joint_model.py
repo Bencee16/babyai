@@ -7,7 +7,11 @@ class JointModel(nn.Module):
         super().__init__()
         self.teacher = teacher
         self.student = student
-        self.comm_embed = nn.Linear(self.teacher.vocab_size * self.teacher.message_length, self.student.message_dim)
+
+        self.comm_embed = nn.Embedding(self.teacher.vocab_size, self.student.message_dim)
+        self.comm_encoder_rnn = nn.GRU(input_size=self.teacher.instr_dim,
+                               hidden_size=self.teacher.instr_dim,
+                               batch_first=True)
 
     @property
     def memory_size(self):
@@ -24,9 +28,11 @@ class JointModel(nn.Module):
             comm = torch.zeros(obs_teacher.image.shape[0], self.teacher.message_length, self.teacher.vocab_size)
             if torch.cuda.is_available():
                 comm = comm.cuda()
-        # Todo separating train time and test time, sample in test time
 
-        message_embedding = self.comm_embed(comm.view(comm.shape[0],-1))
+        message_embedding = torch.matmul(comm, self.comm_embed.weight)
+
+        _, hidden = self.comm_encoder_rnn(message_embedding)
+        message_embedding = hidden[-1]
 
         model_results = self.student(message_embedding, obs_student, memory, instr_embedding)
 
