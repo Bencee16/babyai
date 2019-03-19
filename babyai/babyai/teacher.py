@@ -70,7 +70,6 @@ class Teacher (ACModel):
 
     def forward(self, obs, memory, instr_embedding=None, tau=1.2):
 
-
         memory_rnn_output, memory, extra_predictions = self._get_embed(obs, memory, instr_embedding)
 
         batch_size = memory_rnn_output.shape[0]
@@ -107,4 +106,4 @@ class Teacher (ACModel):
 
             decoder_input_embedded = torch.matmul(token, self.word_embedding_decoder.weight)
 
-        return torch.stack(message, dim=1).squeeze(2)
+        return torch.stack(message, dim=1).squeeze(2), memory

@@ -44,5 +44,5 @@ class Student(ACModel):
         x = self.critic(embedding)
         value = x.squeeze(1)
 
-        return {'dist': dist, 'value': value, 'memory': memory, 'extra_predictions': extra_predictions}
+        return {'dist': dist, 'value': value, 'memory_student': memory, 'extra_predictions': extra_predictions}
 

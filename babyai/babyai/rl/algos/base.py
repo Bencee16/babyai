@@ -91,8 +91,11 @@ class BaseAlgo(ABC):
 
         self.comms = torch.zeros((self.num_frames_per_proc, self.num_procs, self.acmodel.teacher.message_length, self.acmodel.teacher.vocab_size), device=self.device)
 
-        self.memory = torch.zeros(shape[1], self.acmodel.memory_size, device=self.device)
-        self.memories = torch.zeros(*shape, self.acmodel.memory_size, device=self.device)
+        self.memory_teacher = torch.zeros(shape[1], self.acmodel.memory_size, device=self.device)
+        self.memories_teacher = torch.zeros(*shape, self.acmodel.memory_size, device=self.device)
+
+        self.memory_student = torch.zeros(shape[1], self.acmodel.memory_size, device=self.device)
+        self.memories_student = torch.zeros(*shape, self.acmodel.memory_size, device=self.device)
 
         self.mask = torch.ones(shape[1], device=self.device)
         self.masks = torch.zeros(*shape, device=self.device)
@@ -152,10 +155,11 @@ class BaseAlgo(ABC):
 
 
             with torch.no_grad():
-                model_results, comm = self.acmodel(preprocessed_obs_teacher, preprocessed_obs_student,  self.memory * self.mask.unsqueeze(1), talk)
+                model_results, comm = self.acmodel(preprocessed_obs_teacher, preprocessed_obs_student,  self.memory_teacher*self.mask.unsqueeze(1), self.memory_student * self.mask.unsqueeze(1), talk)
                 dist = model_results['dist']
                 value = model_results['value']
-                memory = model_results['memory']
+                memory_student = model_results['memory_student']
+                memory_teacher = model_results['memory_teacher']
                 extra_predictions = model_results['extra_predictions']
 
             action = dist.sample()
@@ -177,8 +181,13 @@ class BaseAlgo(ABC):
             self.obs = obs
             self.full_obs = full_obs
 
-            self.memories[i] = self.memory
-            self.memory = memory
+            self.memories_teacher[i] = self.memory_teacher
+            self.memory_teacher = memory_teacher
+
+            self.memories_student[i] = self.memory_student
+            self.memory_student = memory_student
+
+
 
             self.masks[i] = self.mask
             self.mask = 1 - torch.tensor(done, device=self.device, dtype=torch.float)
@@ -220,7 +229,10 @@ class BaseAlgo(ABC):
         with torch.no_grad():
             if (i+1)%int(comm_freq) ==0:
                 talk=True
-            next_value = self.acmodel(preprocessed_obs_teacher, preprocessed_obs_student, self.memory * self.mask.unsqueeze(1), talk)[0]['value']
+            else:
+                talk=False
+
+            next_value = self.acmodel(preprocessed_obs_teacher, preprocessed_obs_student, self.memory_teacher * self.mask.unsqueeze(1), self.memory_student * self.mask.unsqueeze(1), talk)[0]['value']
 
         for i in reversed(range(self.num_frames_per_proc)):
             next_mask = self.masks[i+1] if i < self.num_frames_per_proc - 1 else self.mask
@@ -245,7 +257,9 @@ class BaseAlgo(ABC):
         # D is the dimensionality
 
         # T x P x D -> P x T x D -> (P * T) x D
-        exps.memory = self.memories.transpose(0, 1).reshape(-1, *self.memories.shape[2:])
+        exps.memory_teacher = self.memories_teacher.transpose(0, 1).reshape(-1, *self.memories_teacher.shape[2:])
+        exps.memory_student = self.memories_student.transpose(0, 1).reshape(-1, *self.memories_student.shape[2:])
+
         # T x P -> P x T -> (P * T) x 1
         exps.mask = self.masks.transpose(0, 1).reshape(-1).unsqueeze(1)
 

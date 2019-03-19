@@ -83,7 +83,8 @@ class PPOAlgo(BaseAlgo):
 
                 # Initialize memory
 
-                memory = exps.memory[inds]
+                memory_teacher = exps.memory_teacher[inds]
+                memory_student = exps.memory_student[inds]
 
                 for i in range(self.recurrence):
                     # Create a sub-batch of experience
@@ -95,13 +96,15 @@ class PPOAlgo(BaseAlgo):
                         talk = True
                     else:
                         talk = False
-                    model_results, comm = self.acmodel(sb.full_obs, sb.obs,  memory * sb.mask, talk)
+                    model_results, comm = self.acmodel(sb.full_obs, sb.obs,  memory_teacher * sb.mask, memory_student * sb.mask, talk)
                     comms.append(comm)
 
 
                     dist = model_results['dist']
                     value = model_results['value']
-                    memory = model_results['memory']
+                    memory_teacher = model_results['memory_teacher']
+                    memory_student = model_results['memory_student']
+
                     extra_predictions = model_results['extra_predictions']
 
                     entropy = dist.entropy().mean()
@@ -144,7 +147,8 @@ class PPOAlgo(BaseAlgo):
                     # Update memories for next epoch
 
                     if i < self.recurrence - 1:
-                        exps.memory[inds + i + 1] = memory.detach()
+                        exps.memory_teacher[inds + i + 1] = memory_teacher.detach()
+                        exps.memory_student[inds + i + 1] = memory_student.detach()
 
                 # Update batch values
 

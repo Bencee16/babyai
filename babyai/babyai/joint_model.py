@@ -21,9 +21,9 @@ class JointModel(nn.Module):
     def semi_memory_size(self):
         return self.student.memory_dim
 
-    def forward(self, obs_teacher, obs_student, memory, talk=False, instr_embedding=None):
+    def forward(self, obs_teacher, obs_student, memory_teacher, memory_student, talk=False, instr_embedding=None):
         if talk:
-            comm = self.teacher(obs_teacher, memory, instr_embedding)
+            comm, memory_teacher= self.teacher(obs_teacher, memory_teacher, instr_embedding)
         else:
             comm = torch.zeros(obs_teacher.image.shape[0], self.teacher.message_length, self.teacher.vocab_size)
             if torch.cuda.is_available():
@@ -34,7 +34,14 @@ class JointModel(nn.Module):
         _, hidden = self.comm_encoder_rnn(message_embedding)
         message_embedding = hidden[-1]
 
-        model_results = self.student(message_embedding, obs_student, memory, instr_embedding)
+        model_results = self.student(message_embedding, obs_student, memory_student, instr_embedding)
+        model_results['memory_teacher'] = memory_teacher
+
+
+        # embedding = self.teacher(obs_teacher, memory, talk=False, instr_embedding=None)
+        # model_results = self.student(message_embedding, obs_student, memory, instr_embedding)
+
+
 
         return model_results, comm
 
