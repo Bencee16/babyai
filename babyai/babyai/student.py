@@ -23,6 +23,11 @@ class Student(ACModel):
             nn.Tanh(),
             nn.Linear(64, action_space.n)
         )
+        self.critic = nn.Sequential(
+            nn.Linear(self.embedding_size + self.message_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 1)
+        )
 
     def forward(self, message_embedding, obs, memory, instr_embedding=None):
 
@@ -41,7 +46,7 @@ class Student(ACModel):
         x = self.actor(policy_input)
         dist = Categorical(logits=F.log_softmax(x, dim=1))
 
-        x = self.critic(embedding)
+        x = self.critic(policy_input)
         value = x.squeeze(1)
 
         return {'dist': dist, 'value': value, 'memory_student': memory, 'extra_predictions': extra_predictions}

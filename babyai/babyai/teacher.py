@@ -82,7 +82,6 @@ class Teacher (ACModel):
                 decoder_input_embedded = self.word_embedding_decoder(decoder_input).unsqueeze(1)
                 decoder_hidden = memory_rnn_output.unsqueeze(0)
 
-
             decoder_out, decoder_hidden = self.decoder_rnn(decoder_input_embedded, decoder_hidden)
             vocab_scores = self.hidden2word(decoder_out)
             vocab_probs = F.softmax(vocab_scores, -1)
@@ -107,3 +106,4 @@ class Teacher (ACModel):
             decoder_input_embedded = torch.matmul(token, self.word_embedding_decoder.weight)
 
         return torch.stack(message, dim=1).squeeze(2), memory
+

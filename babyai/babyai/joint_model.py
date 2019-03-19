@@ -38,10 +38,5 @@ class JointModel(nn.Module):
         model_results['memory_teacher'] = memory_teacher
 
 
-        # embedding = self.teacher(obs_teacher, memory, talk=False, instr_embedding=None)
-        # model_results = self.student(message_embedding, obs_student, memory, instr_embedding)
-
-
-
         return model_results, comm
 
