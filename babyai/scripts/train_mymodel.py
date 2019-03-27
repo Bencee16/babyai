@@ -15,8 +15,8 @@ import torch
 import numpy as np
 import subprocess
 import sys
-sys.path.insert(0, os.getcwd())
-sys.path.insert(0, os.getcwd()+'/../gym-minigrid')
+# sys.path.insert(0, os.getcwd())
+# sys.path.insert(0, os.getcwd()+'/../gym-minigrid')
 import babyai.utils as utils
 import babyai.rl
 from babyai.arguments import ArgumentParser
@@ -26,7 +26,6 @@ from babyai.joint_model import JointModel
 
 from babyai.evaluate import batch_evaluate
 from babyai.utils.agent import ModelAgent
-
 
 
 # Parse arguments
@@ -63,8 +62,7 @@ for i in range(args.procs):
 
 # Define model name
 prefix = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
-# instr = args.instr_arch if args.instr_arch else "noinstr"
-# mem = "mem" if not args.no_mem else "nomem"
+
 model_name_parts = {
     'prefix': prefix,
     'env': args.env,
@@ -90,24 +88,41 @@ preprocess_obss_student = utils.ObssPreprocessor(args.model, "egocentric", args.
 preprocess_obss_teacher = utils.ObssPreprocessor(args.model, args.teacher_obs, args.pretrained_model, envs[0].room_size)
 
 
-#TODO: here comes the pooling part
-
-
 #Define actor-critic model
 acmodel = utils.load_model(args.model, raise_not_found=False)
 if acmodel is None:
     if args.pretrained_model:
         acmodel = utils.load_model(args.pretrained_model, raise_not_found=True)
     else:
-        teacher = Teacher(preprocess_obss_teacher.obs_space, envs[0].action_space,
-                                args.message_length,
-                                args.image_dim, args.memory_dim, args.instr_dim, args.vocab_size,
-                                not args.no_instr, args.instr_arch, not args.no_mem, args.arch)
-        student = Student(preprocess_obss_student.obs_space, args.student_obs_type,
-                        envs[0].action_space,
-                        args.message_length, args.image_dim, args.memory_dim, args.instr_dim, args.message_dim,
-                        args.dropout, not args.no_instr, args.instr_arch, not args.no_mem, args.arch)
-        acmodel = JointModel(teacher, student)
+        teacher = Teacher(preprocess_obss_teacher.obs_space,
+                          args.message_length,
+                          args.vocab_size,
+                          args.image_dim,
+                          args.memory_dim,
+                          args.instr_dim,
+                          args.comm_decoder_dim,
+                          not args.no_instr,
+                          args.instr_arch,
+                          not args.no_mem,
+                          args.arch)
+        student = Student(preprocess_obss_student.obs_space,
+                          envs[0].action_space,
+                          args.student_obs_type,
+                          args.message_length,
+                          args.vocab_size,
+                          args.image_dim,
+                          args.memory_dim,
+                          args.instr_dim,
+                          args.comm_encoder_dim,
+                          args.dropout,
+                          not args.no_instr,
+                          args.instr_arch,
+                          not args.no_mem,
+                          args.arch)
+        acmodel = JointModel(teacher,
+                             student,
+                             args.memory_dim
+                             )
 
 
 preprocess_obss_student.vocab.save()

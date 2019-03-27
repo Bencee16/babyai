@@ -92,10 +92,10 @@ class ArgumentParser(argparse.ArgumentParser):
                           help="length of the communication signal (default=2)")
         self.add_argument("--vocab-size", type=int, default=3,
                           help="size of vocabulary that the teacher can use (default=3)")
-        self.add_argument("--message-dim", type=int, default=128,
-                          help="dimensionality of the message embedding between the agents (default: 128)")
-        self.add_argument("--comm-lstm-hidden-size", type=int, default=128,
-                          help="dimensionality of the hidden size of the communication lstm (default=128)")
+        self.add_argument("--comm-decoder-dim", type=int, default=128,
+                          help="dimensionality of the hidden size of the communication decoder rnn in teacher(default=128)")
+        self.add_argument("--comm_encoder-dim", type=int, default=128,
+                          help="dimensionality of the hidden size of the communication encoder rnn in student (default: 128)")
         self.add_argument("--student-obs-type", default="vision",
                           help="Observation of the student. The agent either sees an egocentric view and processes" \
                                "the task itself (vision) or completely relying on teacher instructions  (blind)")

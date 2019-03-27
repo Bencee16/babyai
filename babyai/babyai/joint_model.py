@@ -3,23 +3,20 @@ import torch
 
 
 class JointModel(nn.Module):
-    def __init__(self, teacher, student):
+    def __init__(self, teacher, student, memory_dim):
         super().__init__()
         self.teacher = teacher
         self.student = student
-
-        self.comm_embed = nn.Embedding(self.teacher.vocab_size, self.student.message_dim)
-        self.comm_encoder_rnn = nn.GRU(input_size=self.teacher.instr_dim,
-                               hidden_size=self.teacher.instr_dim,
-                               batch_first=True)
+        self.memory_dim = memory_dim
 
     @property
     def memory_size(self):
-        return 2 * self.teacher.semi_memory_size
+        return 2 * self.semi_memory_size
 
     @property
     def semi_memory_size(self):
-        return self.student.memory_dim
+        return self.memory_dim
+
 
     def forward(self, obs_teacher, obs_student, memory_teacher, memory_student, talk=False, instr_embedding=None):
         if talk:
@@ -29,14 +26,8 @@ class JointModel(nn.Module):
             if torch.cuda.is_available():
                 comm = comm.cuda()
 
-        message_embedding = torch.matmul(comm, self.comm_embed.weight)
-
-        _, hidden = self.comm_encoder_rnn(message_embedding)
-        message_embedding = hidden[-1]
-
-        model_results = self.student(message_embedding, obs_student, memory_student, instr_embedding)
+        model_results = self.student(comm, obs_student, memory_student, instr_embedding)
         model_results['memory_teacher'] = memory_teacher
-
 
         return model_results, comm
 

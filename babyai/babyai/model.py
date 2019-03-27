@@ -220,8 +220,6 @@ class ACModel(nn.Module, babyai.rl.RecurrentACModel):
         return {'dist': dist, 'value': value, 'memory': memory, 'extra_predictions': extra_predictions}
 
 
-
-
     def _get_instr_embedding(self, instr):
         if self.lang_model == 'gru':
             _, hidden = self.instr_rnn(self.word_embedding(instr))
@@ -307,5 +305,3 @@ class ACModel(nn.Module, babyai.rl.RecurrentACModel):
             extra_predictions = dict()
 
         return embedding, memory, extra_predictions
-
-
